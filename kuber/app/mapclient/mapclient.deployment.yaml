@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mapclient
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mapclient
+  template:
+    metadata:
+      labels:
+        app: mapclient
+    spec:
+      containers:
+      - name: mapclient
+        image: devopskpi.azurecr.io/mapclient:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/config.json
+          subPath: config.json
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "10m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mapclient-config

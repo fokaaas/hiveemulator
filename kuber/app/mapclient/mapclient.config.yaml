@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mapclient-config
+data:
+  config.json: |
+    {
+      "API": "http://131.163.56.30/api/v1/client"
+    }
