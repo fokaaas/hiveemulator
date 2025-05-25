@@ -1,0 +1,40 @@
+version: "3.9"
+name: hive-emulator
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - hive-emulator-net
+  communication-control:
+    image: 659555267302.dkr.ecr.eu-north-1.amazonaws.com/hiveemulator/communication
+    container_name: communication-control
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    networks:
+      - hive-emulator-net
+  hive-mind:
+    image: 659555267302.dkr.ecr.eu-north-1.amazonaws.com/hiveemulator/hivemind
+    container_name: hive-mind
+    depends_on:
+      - communication-control
+    networks:
+      - hive-emulator-net
+  map-client:
+    image: 659555267302.dkr.ecr.eu-north-1.amazonaws.com/hiveemulator/mapclient
+    container_name: map-client
+    ports:
+      - "3000:80"
+    env_file:
+      - .env
+    depends_on:
+      - communication-control
+    networks:
+      - hive-emulator-net
+
+networks:
+  hive-emulator-net:
+    driver: bridge
