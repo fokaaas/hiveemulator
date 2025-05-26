@@ -5,5 +5,5 @@ metadata:
 data:
   config.json: |
     {
-      "API": "http://131.163.56.30/api/v1/client"
+      "API": "http://131.163.67.51/api/v1/client"
     }

@@ -1,0 +1,58 @@
+name: Build & Deploy Map Client
+
+on:
+  push:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/MapClient
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and Push Image to ACR
+        run: |
+          IMAGE_TAG=$([[ "${{ github.ref_name }}" == "main" ]] && echo "latest" || echo "dev")
+          ACR_NAME=${{ secrets.ACR_NAME }}
+          
+          az acr login --name $ACR_NAME
+          
+          docker build -t $ACR_NAME.azurecr.io/mapclient:$IMAGE_TAG .
+          docker push $ACR_NAME.azurecr.io/mapclient:$IMAGE_TAG
+
+      - name: Set environment for AKS
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "AKS_RG=${{ secrets.AKS_RG }}" >> $GITHUB_ENV
+            echo "AKS_CLUSTER=${{ secrets.AKS_CLUSTER }}" >> $GITHUB_ENV
+          else
+            echo "AKS_RG=${{ secrets.AKS_RG_DEV }}" >> $GITHUB_ENV
+            echo "AKS_CLUSTER=${{ secrets.AKS_CLUSTER_DEV }}" >> $GITHUB_ENV
+          fi
+
+      - name: Set up kubectl
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.AKS_RG }}
+          cluster-name: ${{ env.AKS_CLUSTER }}
+
+      - name: Restart AKS Pods
+        run: kubectl rollout restart deployment/mapclient

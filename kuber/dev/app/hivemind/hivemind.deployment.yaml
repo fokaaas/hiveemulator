@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hivemind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hivemind
+  template:
+    metadata:
+      labels:
+        app: hivemind
+    spec:
+      containers:
+      - name: hivemind
+        image: devopskpi.azurecr.io/hivemind:dev
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5149
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "10m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: CommunicationConfiguration__CommunicationControlIP
+          value: communication
+        - name: CommunicationConfiguration__CommunicationControlPort
+          value: "80"
+        - name: CommunicationConfiguration__HiveIP
+          value: hivemind
